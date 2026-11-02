@@ -1,0 +1,55 @@
+version: '3.8'
+
+# Đặt tên project rõ ràng trên Docker Desktop
+name: shopfast-project
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopfast_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: shopfast
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shopfast_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: shopfast_redis
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - shopfast_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopfast_api
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: 'postgresql://postgres:mypassword@postgres:5432/shopfast?schema=public'
+      REDIS_HOST: 'redis'
+      REDIS_PORT: 6379
+      JWT_SECRET: 'ShopFastSecretKey2026'
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - shopfast_network
+
+volumes:
+  postgres_data:
+
+networks:
+  shopfast_network:
+    driver: bridge
